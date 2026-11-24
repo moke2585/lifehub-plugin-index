@@ -17,7 +17,8 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.parse import urlparse
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "registry.json"
@@ -131,22 +132,41 @@ def main() -> int:
     return 0
 
 
+class _AuthRedirectHandler(HTTPRedirectHandler):
+    """跨主机重定向时移除 Authorization，兼容 GitHub Release 资产的 S3 签名 URL。"""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if redirected is not None and urlparse(req.full_url).netloc != urlparse(newurl).netloc:
+            redirected.remove_header("Authorization")
+        return redirected
+
+
+_OPENER = build_opener(_AuthRedirectHandler())
+
+
 def api_json(url: str, token: str) -> dict:
-    return json.loads(download_bytes(url, token).decode("utf-8"))
+    return json.loads(
+        download_bytes(url, token, accept="application/vnd.github+json").decode("utf-8"),
+    )
 
 
-def download_bytes(url: str, token: str) -> bytes:
+def download_bytes(
+    url: str,
+    token: str,
+    accept: str = "application/octet-stream",
+) -> bytes:
     request = Request(
         url,
         headers={
             "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json, application/octet-stream",
+            "Accept": accept,
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "lifehub-index-bot",
         },
     )
     try:
-        with urlopen(request, timeout=60) as response:
+        with _OPENER.open(request, timeout=60) as response:
             data = response.read(MAX_DOWNLOAD_BYTES + 1)
             if len(data) > MAX_DOWNLOAD_BYTES:
                 raise RuntimeError(f"下载内容超过 {MAX_DOWNLOAD_BYTES // 1024 // 1024} MB 上限")
