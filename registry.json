@@ -1,4 +1,25 @@
 {
   "schema": 1,
-  "plugins": []
+  "plugins": [
+    {
+      "url": "https://github.com/moke2585/lifehub-plugin-memo/releases/download/v1.1.0/memo-apk-release.apk",
+      "repo": "https://github.com/moke2585/lifehub-plugin-memo",
+      "signerSha256": "215d2a649a4175061a2d26300c9d73a4e30e1a6ead20e7ffde41f773db47bcaa",
+      "pluginSdkVersion": 1,
+      "version": "1.1.0",
+      "versionCode": 1,
+      "pluginId": "com.lifehub.plugin.memo",
+      "sizeBytes": 980749,
+      "minHostVersion": 1,
+      "sha256": "bd3b537b297a58ca3926bcba9985fd32631d0b3886b6e583ed78ec405070a1ab",
+      "name": "任务清单",
+      "capabilities": [
+        "ui.action",
+        "storage.private"
+      ],
+      "applicationId": "com.lifehub.plugin.memo",
+      "artifactType": "apk"
+    }
+  ],
+  "generatedAt": "2026-11-24T15:26:13Z"
 }
