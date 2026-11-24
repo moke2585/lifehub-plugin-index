@@ -44,7 +44,7 @@ SHA256 = re.compile(r"^[0-9a-f]{64}$")
 PACKAGE_LINE = re.compile(
     r"package: name='(?P<name>[^']+)' versionCode='(?P<code>\d+)' versionName='(?P<version>[^']+)'",
 )
-CERT_DIGEST = re.compile(r"Signer #1 certificate SHA-256 digest: (?P<digest>[0-9a-f]{64})")
+CERT_DIGEST = re.compile(r"certificate SHA-256 digest: (?P<digest>[0-9a-f]{64})")
 
 
 def main() -> int:
