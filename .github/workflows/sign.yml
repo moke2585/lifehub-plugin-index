@@ -28,7 +28,7 @@ jobs:
           KEY_A: ${{ secrets.INDEX_EC_P256_PRIVATE_KEY_B64 }}
           KEY_B: ${{ secrets.INDEX_SIGNING_KEY_B64 }}
           KEY_C: ${{ secrets.INDEX_PRIVATE_KEY_B64 }}
-          KEY_ID: ${{ vars.INDEX_KEY_ID || secrets.INDEX_KEY_ID }}
+          KEY_ID: ${{ vars.INDEX_KEY_ID || secrets.INDEX_KEY_ID || 'index-2026-11' }}
         run: |
           for entry in \
             "INDEX_EC_P256_PRIVATE_KEY_B64=$KEY_A" \
@@ -47,7 +47,7 @@ jobs:
       - name: Sign registry
         env:
           INDEX_PRIVATE_KEY_B64: ${{ secrets.INDEX_EC_P256_PRIVATE_KEY_B64 || secrets.INDEX_SIGNING_KEY_B64 || secrets.INDEX_PRIVATE_KEY_B64 }}
-          INDEX_KEY_ID: ${{ vars.INDEX_KEY_ID || secrets.INDEX_KEY_ID }}
+          INDEX_KEY_ID: ${{ vars.INDEX_KEY_ID || secrets.INDEX_KEY_ID || 'index-2026-11' }}
         run: |
           if [ -z "$INDEX_PRIVATE_KEY_B64" ]; then
             echo "缺少索引签名私钥：请在 lifehub-plugin-index 的 Environment index-signing（或仓库 Secrets）添加 INDEX_EC_P256_PRIVATE_KEY_B64" >&2
