@@ -25,13 +25,22 @@ jobs:
 
       - name: Sign registry
         env:
-          INDEX_SIGNING_KEY_B64: ${{ secrets.INDEX_EC_P256_PRIVATE_KEY_B64 }}
+          INDEX_PRIVATE_KEY_B64: ${{ secrets.INDEX_EC_P256_PRIVATE_KEY_B64 || secrets.INDEX_SIGNING_KEY_B64 }}
           INDEX_KEY_ID: ${{ secrets.INDEX_KEY_ID }}
         run: |
-          test -n "$INDEX_SIGNING_KEY_B64"
-          test -n "$INDEX_KEY_ID"
-          test -f "keys/$INDEX_KEY_ID.pem"
-          echo "$INDEX_SIGNING_KEY_B64" | base64 --decode > "$RUNNER_TEMP/index-private.pem"
+          if [ -z "$INDEX_PRIVATE_KEY_B64" ]; then
+            echo "缺少索引签名私钥：请在 lifehub-plugin-index 的 Environment index-signing（或仓库 Secrets）添加 INDEX_EC_P256_PRIVATE_KEY_B64" >&2
+            exit 1
+          fi
+          if [ -z "$INDEX_KEY_ID" ]; then
+            echo "缺少 INDEX_KEY_ID：请添加 index-2026-11" >&2
+            exit 1
+          fi
+          if [ ! -f "keys/$INDEX_KEY_ID.pem" ]; then
+            echo "公钥不存在：keys/$INDEX_KEY_ID.pem" >&2
+            exit 1
+          fi
+          echo "$INDEX_PRIVATE_KEY_B64" | base64 --decode > "$RUNNER_TEMP/index-private.pem"
           test -s "$RUNNER_TEMP/index-private.pem"
           java scripts/IndexSignatureTool.java sign \
             --registry registry.json \
