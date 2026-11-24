@@ -61,7 +61,16 @@ jobs:
             echo "公钥不存在：keys/$INDEX_KEY_ID.pem" >&2
             exit 1
           fi
-          echo "$INDEX_PRIVATE_KEY_B64" | base64 --decode > "$RUNNER_TEMP/index-private.pem"
+          KEY_VALUE="$INDEX_PRIVATE_KEY_B64"
+          if printf '%s' "$KEY_VALUE" | grep -q -- '-----BEGIN'; then
+            printf '%s\n' "$KEY_VALUE" > "$RUNNER_TEMP/index-private.pem"
+          else
+            printf '%s' "$KEY_VALUE" | tr -d '[:space:]' | base64 --decode > "$RUNNER_TEMP/index-private.pem" 2>"$RUNNER_TEMP/base64.err" || {
+              echo "索引私钥不是合法 Base64。请填入 D:\\keys\\lifehub-index-signing.pem 的单行 Base64 输出，或直接粘贴 PEM 私钥。" >&2
+              cat "$RUNNER_TEMP/base64.err" >&2
+              exit 1
+            }
+          fi
           test -s "$RUNNER_TEMP/index-private.pem"
           java scripts/IndexSignatureTool.java sign \
             --registry registry.json \
