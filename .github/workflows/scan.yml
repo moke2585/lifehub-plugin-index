@@ -1,0 +1,58 @@
+name: Scan plugin releases
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install Android build-tools
+        run: |
+          SDKMANAGER=$(find "${ANDROID_HOME}/cmdline-tools" -name sdkmanager -type f | sort -V | tail -n 1)
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" "build-tools;36.0.0" >/dev/null
+          echo "${ANDROID_HOME}/build-tools/36.0.0" >> "$GITHUB_PATH"
+
+      - name: Sync latest releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLUGIN_REPOS: moke2585/lifehub-plugin-memo
+        run: python3 scripts/sync_releases.py
+
+      - name: Validate registry
+        run: python3 scripts/validate.py
+
+      - name: Open review PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- registry.json; then
+            echo "registry.json 无变化"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B bot/registry-update
+          git add registry.json
+          git commit -m "chore: update registry from latest releases"
+          git push --force origin bot/registry-update
+          if gh pr list --head bot/registry-update --json number --jq '.[0].number' | grep -q .; then
+            echo "索引更新 PR 已存在"
+          else
+            gh pr create \
+              --base main \
+              --head bot/registry-update \
+              --title "chore: update registry from latest releases" \
+              --body-file .github/registry-pr-body.md
+          fi

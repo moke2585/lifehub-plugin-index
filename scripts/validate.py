@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -21,6 +22,8 @@ PLUGIN_KEYS = {
     "name",
     "version",
     "artifactType",
+    "applicationId",
+    "versionCode",
     "url",
     "sha256",
     "signerSha256",
@@ -28,7 +31,10 @@ PLUGIN_KEYS = {
     "pluginSdkVersion",
     "capabilities",
     "repo",
+    "sizeBytes",
 }
+OPTIONAL_KEYS = {"applicationId", "versionCode", "sizeBytes"}
+REQUIRED_KEYS = PLUGIN_KEYS - OPTIONAL_KEYS
 ARTIFACT_TYPES = {"apk", "lhplugin"}
 
 PLUGIN_ID = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$")
@@ -51,7 +57,7 @@ def validate_plugin(index: int, plugin: object, seen: set[str]) -> list[str]:
     unknown = sorted(set(plugin) - PLUGIN_KEYS)
     if unknown:
         errors.append(f"{prefix} 包含未知字段：{', '.join(unknown)}")
-    missing = sorted(PLUGIN_KEYS - set(plugin))
+    missing = sorted(REQUIRED_KEYS - set(plugin))
     if missing:
         errors.append(f"{prefix} 缺少字段：{', '.join(missing)}")
         return errors
@@ -101,6 +107,24 @@ def validate_plugin(index: int, plugin: object, seen: set[str]) -> list[str]:
         if valid_capabilities and len(set(capabilities)) != len(capabilities):
             errors.append(f"{prefix}.capabilities 不能重复")
 
+    if "applicationId" in plugin:
+        application_id = plugin["applicationId"]
+        if not isinstance(application_id, str) or not PLUGIN_ID.fullmatch(application_id):
+            errors.append(f"{prefix}.applicationId 格式无效：{application_id!r}")
+    if "versionCode" in plugin and not is_positive_int(plugin["versionCode"]):
+        errors.append(f"{prefix}.versionCode 必须是正整数")
+    if "sizeBytes" in plugin and not is_positive_int(plugin["sizeBytes"]):
+        errors.append(f"{prefix}.sizeBytes 必须是正整数")
+
+    if artifact_type == "apk":
+        if "applicationId" not in plugin:
+            errors.append(f"{prefix}.applicationId 在 APK 条目中必填")
+        if "versionCode" not in plugin:
+            errors.append(f"{prefix}.versionCode 在 APK 条目中必填")
+    elif artifact_type == "lhplugin":
+        if "applicationId" in plugin and plugin["applicationId"] != plugin_id:
+            errors.append(f"{prefix}.applicationId 必须等于 pluginId")
+
     return errors
 
 
@@ -127,8 +151,15 @@ def validate() -> list[str]:
     if not isinstance(schema, int) or isinstance(schema, bool) or schema != 1:
         errors.append("schema 必须为 1")
 
-    if "generatedAt" in data and not isinstance(data["generatedAt"], str):
-        errors.append("generatedAt 必须是 ISO-8601 字符串")
+    if "generatedAt" in data:
+        value = data["generatedAt"]
+        if not isinstance(value, str):
+            errors.append("generatedAt 必须是 ISO-8601 字符串")
+        else:
+            try:
+                datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                errors.append("generatedAt 必须是 ISO-8601 时间")
 
     plugins = data.get("plugins")
     if not isinstance(plugins, list):

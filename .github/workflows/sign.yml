@@ -1,0 +1,56 @@
+name: Sign registry
+
+on:
+  push:
+    branches: [main]
+    paths: ["registry.json"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    environment: index-signing
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Sign registry
+        env:
+          INDEX_SIGNING_KEY_B64: ${{ secrets.INDEX_EC_P256_PRIVATE_KEY_B64 }}
+          INDEX_KEY_ID: ${{ secrets.INDEX_KEY_ID }}
+        run: |
+          test -n "$INDEX_SIGNING_KEY_B64"
+          test -n "$INDEX_KEY_ID"
+          test -f "keys/$INDEX_KEY_ID.pem"
+          echo "$INDEX_SIGNING_KEY_B64" | base64 --decode > "$RUNNER_TEMP/index-private.pem"
+          test -s "$RUNNER_TEMP/index-private.pem"
+          java scripts/IndexSignatureTool.java sign \
+            --registry registry.json \
+            --key "$RUNNER_TEMP/index-private.pem" \
+            --key-id "$INDEX_KEY_ID" \
+            --out registry.sig
+          java scripts/IndexSignatureTool.java verify \
+            --registry registry.json \
+            --signature registry.sig \
+            --public "keys/$INDEX_KEY_ID.pem"
+
+      - name: Commit signature
+        run: |
+          git add registry.sig
+          if git diff --cached --quiet -- registry.sig; then
+            echo "索引签名已是最新"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: sign registry [skip ci]"
+          git push
