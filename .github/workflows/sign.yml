@@ -43,6 +43,11 @@ jobs:
               echo "$name: missing"
             fi
           done
+          KEY_VALUE="${KEY_A:-${KEY_B:-$KEY_C}}"
+          if [ -n "$KEY_VALUE" ]; then
+            echo "selected key length=${#KEY_VALUE}"
+            echo "selected key prefix=$(printf '%s' "$KEY_VALUE" | cut -c1-12)"
+          fi
 
       - name: Sign registry
         env:
