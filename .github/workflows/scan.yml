@@ -27,7 +27,7 @@ jobs:
       - name: Sync latest releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PLUGIN_REPOS: moke2585/lifehub-plugin-memo
+          PLUGIN_REPOS: moke2585/lifehub-plugin-memo,moke2585/lifehub-plugin-ledger
         run: python3 scripts/sync_releases.py
 
       - name: Validate registry

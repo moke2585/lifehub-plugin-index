@@ -22,7 +22,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "registry.json"
-DEFAULT_REPOS = "moke2585/lifehub-plugin-memo"
+DEFAULT_REPOS = "moke2585/lifehub-plugin-memo,moke2585/lifehub-plugin-ledger"
 ASSET_METADATA = "plugin-release.json"
 MAX_DOWNLOAD_BYTES = 64 * 1024 * 1024
 ENTRY_KEYS = {
