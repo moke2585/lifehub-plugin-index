@@ -2,6 +2,25 @@
   "schema": 1,
   "plugins": [
     {
+      "capabilities": [
+        "ui.action",
+        "storage.private"
+      ],
+      "pluginSdkVersion": 1,
+      "signerSha256": "215d2a649a4175061a2d26300c9d73a4e30e1a6ead20e7ffde41f773db47bcaa",
+      "pluginId": "com.lifehub.plugin.ledger",
+      "sha256": "9538bd7f05e9f8fbfc07c899c947fb080665e90f1d11b3a1a81b8d0a00b94342",
+      "version": "1.7.0",
+      "url": "https://github.com/moke2585/lifehub-plugin-ledger/releases/download/v1.7.0/ledger-apk-release.apk",
+      "minHostVersion": 1,
+      "artifactType": "apk",
+      "applicationId": "com.lifehub.plugin.ledger",
+      "name": "记账",
+      "versionCode": 1,
+      "repo": "https://github.com/moke2585/lifehub-plugin-ledger",
+      "sizeBytes": 1004360
+    },
+    {
       "url": "https://github.com/moke2585/lifehub-plugin-memo/releases/download/v1.1.0/memo-apk-release.apk",
       "repo": "https://github.com/moke2585/lifehub-plugin-memo",
       "signerSha256": "215d2a649a4175061a2d26300c9d73a4e30e1a6ead20e7ffde41f773db47bcaa",
@@ -21,5 +40,5 @@
       "artifactType": "apk"
     }
   ],
-  "generatedAt": "2026-11-24T15:26:13Z"
+  "generatedAt": "2026-11-28T11:35:07Z"
 }
